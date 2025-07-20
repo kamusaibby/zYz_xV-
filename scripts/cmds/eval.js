@@ -5,7 +5,6 @@ module.exports = {
 		name: "eval",
 		version: "1.6",
 		author: "NTKhang",
-		usePrefix: false,
 		countDown: 5,
 		role: 2,
 		description: {

@@ -1,36 +1,36 @@
 const fs = require('fs');
-const path = require('path');
 
 module.exports = {
-	config: {
-		name: "file",
-		version: "1.0",
-		author: "xnil6x",
-		countDown: 5,
-		role: 0,
-		shortDescription: "Send bot script",
-		longDescription: "Send specified file from any location",
-		category: "owner",
-		guide: "{pn} <file path>. Ex: .{pn} scripts/cmds/curl.js"
-	},
+  config: {
+    name: "sendfile",
+    aliases: ["file"],
+    version: "1.0",
+    author: "Mahir Tahsan",
+    countDown: 5,
+    role: 0,
+    shortDescription: "Send bot script",
+    longDescription: "Send bot specified file ",
+    category: "owner",
+    guide: "{pn} file name. Ex: .{pn} filename"
+  },
 
-	onStart: async function ({ message, args, api, event }) {
-		const permission = ["100001986888287"];
-		if (!permission.includes(event.senderID)) {
-			return api.sendMessage("You don't have permission to use this command.", event.threadID, event.messageID);
-		}
+  onStart: async function ({ message, args, api, event }) {
+    const permission = ["61552930114349",];
+    if (!permission.includes(event.senderID)) {
+      return api.sendMessage("- 𝐒𝐫𝐲 𝐬𝐢𝐫 𝐚𝐩𝐧𝐚𝐫 𝐩𝐞𝐫𝐦𝐢𝐬𝐬𝐢𝐨𝐧 𝐧𝐞𝐢 𝐨𝐧𝐥𝐲 𝐚𝐦𝐚𝐫 𝐛𝐨𝐬𝐬 𝐮𝐬𝐞 𝐤𝐨𝐫𝐭𝐞 𝐩𝐚𝐫𝐛𝐞 🐤", event.threadID, event.messageID);
+    }
 
-		const filePath = args.join(" ");
-		if (!filePath) {
-			return api.sendMessage("Please provide a file path.", event.threadID, event.messageID);
-		}
+    const fileName = args[0];
+    if (!fileName) {
+      return api.sendMessage("Please provide a file name.", event.threadID, event.messageID);
+    }
 
-		const absolutePath = path.resolve(filePath);
-		if (!fs.existsSync(absolutePath)) {
-			return api.sendMessage(`File not found: ${filePath}`, event.threadID, event.messageID);
-		}
+    const filePath = __dirname + `/${fileName}.js`;
+    if (!fs.existsSync(filePath)) {
+      return api.sendMessage(`File not found: ${fileName}.js`, event.threadID, event.messageID);
+    }
 
-		const fileContent = fs.readFileSync(absolutePath, 'utf8');
-		api.sendMessage({ body: fileContent }, event.threadID);
-	}
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+    api.sendMessage({ body: fileContent }, event.threadID);
+  }
 };
