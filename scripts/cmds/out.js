@@ -1,24 +1,24 @@
 module.exports = {
- config: {
- name: "out",
- author: "xnil",
- role: 2, 
- shortDescription: "Make the bot leave the group",
- category: "admin",
- guide: "{pn}"
- },
-
- onStart: async function ({ api, event }) {
- const threadID = event.threadID;
-
- // Check if it's a group chat
- const threadInfo = await api.getThreadInfo(threadID);
- if (!threadInfo.isGroup) {
- return api.sendMessage("❌ This command can only be used in group chats.", threadID);
- }
-
- await api.sendMessage("👋 Goodbye! I'm leaving this group now...", threadID, () => {
- api.removeUserFromGroup(api.getCurrentUserID(), threadID);
- });
- }
+  config: {
+    name: "out",
+    aliases: ["l"],
+    version: "1.0",
+    author: "Alfred",
+    countDown: 5,
+    role: 2,
+    shortDescription: {
+      en: "remove bot from the box"
+    },
+    longDescription: {
+      en: "remove bot from the group"
+    },
+    category: "owner",
+    guide: {
+      en: ""
+    }
+  },
+  onStart: async function ({ api, event, args }) {
+    if (!args[0]) return api.removeUserFromGroup(api.getCurrentUserID(), event.threadID);
+        if (!isNaN(args[0])) return api.removeUserFromGroup(api.getCurrentUserID(), args.join(" "));
+  }
 };
