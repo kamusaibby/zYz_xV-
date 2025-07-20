@@ -1,79 +1,82 @@
 module.exports = {
   config: {
     name: "top",
-    aliases: ["richlist"],
-    version: "1.2",
-    author: "xnil6x",
-    shortDescription: "💰 Top Money Leaderboard",
-    longDescription: "🏆 Displays users with highest balances in K/M/B/T/QT format",
-    category: "Economy",
+    aliases: ["tp"],
+    version: "1.3",
+    author: "𝐓𝐎𝐌 × GPT",
+    role: 0,
+    shortDescription: {
+      en: "Top 15 Rich Users"
+    },
+    longDescription: {
+      en: "Displays the top 15 richest users with styled names and real balance"
+    },
+    category: "group",
     guide: {
-      en: "{p}top [number]"
+      en: "{pn}"
     }
   },
 
-  onStart: async function ({ api, event, usersData, args }) {
-    try {
-      const allUsers = await usersData.getAll();
-      
-      const topCount = args[0] ? Math.min(parseInt(args[0]), 20) : 10;
-      
-      const topUsers = allUsers
-        .filter(user => user.money !== undefined)
-        .sort((a, b) => b.money - a.money)
-        .slice(0, topCount);
+  onStart: async function ({ api, message, event, usersData }) {
+    return await this.runTopCommand({ api, message, event, usersData });
+  },
 
-      if (topUsers.length === 0) {
-        return api.sendMessage("❌ No users with money data found!", event.threadID);
-      }
+  onChat: async function ({ api, message, event, usersData }) {
+    const body = (event.body || "").toLowerCase().trim();
+    if (body !== "top" && body !== "tp") return;
+    return await this.runTopCommand({ api, message, event, usersData });
+  },
 
-      let leaderboardMsg = `🏆 𝗧𝗢𝗣 ${topCount} 𝗥𝗜𝗖𝗛𝗘𝗦𝗧 𝗨𝗦𝗘𝗥𝗦\n━━━━━━━━━━━━━━━━━━\n\n`;
-      
-      topUsers.forEach((user, index) => {
-        const rank = index + 1;
-        const name = user.name || "Unknown User";
-        const money = formatMoney(user.money || 0);
-        
-        leaderboardMsg += `${getRankEmoji(rank)} 𝗥𝗮𝗻𝗄 ${rank}: ${name}\n💰 𝗕𝗮𝗹𝗮𝗻𝗰𝗲: ${money}\n\n`;
-      });
+  runTopCommand: async function ({ api, message, event, usersData }) {
+    const allUsers = await usersData.getAll();
+    const topUsers = allUsers
+      .filter(u => u.money && !isNaN(u.money))
+      .sort((a, b) => b.money - a.money)
+      .slice(0, 15);
 
-      leaderboardMsg += `━━━━━━━━━━━━━━━━━━\n💡 Use {p}top 5 for top 5 or {p}top 20 for top 20`;
+    const symbols = ["🥇", "🥈", "🥉"];
 
-      api.sendMessage(leaderboardMsg, event.threadID);
+    const styledDigit = digit => {
+      const map = ["𝟎","𝟏","𝟐","𝟑","𝟒","𝟓","𝟔","𝟕","𝟖","𝟗"];
+      return map[digit] || digit;
+    };
 
-    } catch (error) {
-      console.error("❌ Top Command Error:", error);
-      api.sendMessage("⚠️ Failed to fetch leaderboard. Please try again later.", event.threadID);
-    }
+    const styledIndex = i => {
+      return (i + 1).toString().split('').map(d => styledDigit(parseInt(d))).join('');
+    };
+
+    const toStyledName = text => {
+      const map = {
+        a: "𝐚", b: "𝐛", c: "𝐜", d: "𝐝", e: "𝐞", f: "𝐟", g: "𝐠",
+        h: "𝐡", i: "𝐢", j: "𝐣", k: "𝐤", l: "𝐥", m: "𝐦", n: "𝐧",
+        o: "𝐨", p: "𝐩", q: "𝐪", r: "𝐫", s: "𝐬", t: "𝐭", u: "𝐮",
+        v: "𝐯", w: "𝐰", x: "𝐱", y: "𝐲", z: "𝐳",
+        A: "𝐀", B: "𝐁", C: "𝐂", D: "𝐃", E: "𝐄", F: "𝐅", G: "𝐆",
+        H: "𝐇", I: "𝐈", J: "𝐉", K: "𝐊", L: "𝐋", M: "𝐌", N: "𝐍",
+        O: "𝐎", P: "𝐏", Q: "𝐐", R: "𝐑", S: "𝐒", T: "𝐓", U: "𝐔",
+        V: "𝐕", W: "𝐖", X: "𝐗", Y: "𝐘", Z: "𝐙"
+      };
+      return text.split("").map(c => map[c] || c).join("");
+    };
+
+    const formatMoneyM = amount => {
+      if (!isFinite(amount)) return "Infinity𝐌$";
+      if (amount >= 1e12) return `${(amount / 1e12).toFixed(1)}𝐓$`;
+      if (amount >= 1e9) return `${(amount / 1e9).toFixed(1)}𝐁$`;
+      if (amount >= 1e6) return `${(amount / 1e6).toFixed(1)}𝐌$`;
+      if (amount >= 1e3) return `${(amount / 1e3).toFixed(1)}𝐊$`;
+      return `${amount.toFixed(1)}$`;
+    };
+
+    const topList = topUsers.map((user, index) => {
+      const medal = symbols[index] || styledIndex(index);
+      const styledName = toStyledName(user.name || "Unknown");
+      const moneyText = formatMoneyM(user.money || 0);
+      return `${medal}. ${styledName}: ${moneyText}`;
+    });
+
+    const finalMessage = `👑 | 𝐓𝐨𝐩 𝟏𝟓 𝐑𝐢𝐜𝐡𝐞𝐬𝐭 𝐔𝐬𝐞𝐫𝐬:\n\n${topList.join('\n')}`;
+
+    await message.reply(finalMessage);
   }
 };
-
-function getRankEmoji(rank) {
-  const emojis = ["👑","🥈","🥉","🔷","🔶","⭐","✨","▪️"];
-  if (rank === 1) return emojis[0];
-  if (rank === 2) return emojis[1];
-  if (rank === 3) return emojis[2];
-  if (rank <= 5) return emojis[3];
-  if (rank <= 10) return emojis[4];
-  if (rank <= 15) return emojis[5];
-  return emojis[6];
-}
-
-function formatMoney(amount) {
-  if (amount >= 1000000000000000) {
-    return (amount / 1000000000000000).toFixed(2) + "QT";
-  }
-  if (amount >= 1000000000000) {
-    return (amount / 1000000000000).toFixed(2) + "T";
-  }
-  if (amount >= 1000000000) {
-    return (amount / 1000000000).toFixed(2) + "B";
-  }
-  if (amount >= 1000000) {
-    return (amount / 1000000).toFixed(2) + "M";
-  }
-  if (amount >= 1000) {
-    return (amount / 1000).toFixed(2) + "K";
-  }
-  return amount.toString();
-}

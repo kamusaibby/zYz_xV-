@@ -1,17 +1,20 @@
-const axios = require("axios");
-const fs = require("fs-extra");
+const fs = require("fs");
+
 module.exports = {
   config: {
     name: "v2a",
     aliases: ["video2audio"],
     description: "Convert Video to audio ",
     version: "1.2",
-    author: "dipto",
-    countDown: 20,
-   description: {
+    author: "arfan",
+    countDown: 60,
+   longDescription: {
+      vi: "tạo avatar anime",
       en: "Reply to a video"
      },
-    category: "media",
+    //shortDescription: "Create FB Banner",
+
+    category: "tool",
     guide: {
       en: "{p}{n}"
     }
@@ -19,29 +22,28 @@ module.exports = {
   },
   onStart: async function ({ api, event, args, message }) {
     try {
+      const axios = require("axios");
+      const fs = require("fs-extra");
+
       if (!event.messageReply || !event.messageReply.attachments || event.messageReply.attachments.length === 0) {
-        message.reply("Please reply to a video message to convert it to audio.");
+        api.sendMessage("Please reply to a video message to convert it to audio.", event.threadID, event.messageID);
         return;
       }
 
-      const dipto = event.messageReply.attachments[0];
-      if (dipto.type !== "video") {
-        message.reply("The replied content must be a video.");
+      const att = event.messageReply.attachments[0];
+      if (att.type !== "video") {
+        api.sendMessage("The replied content must be a video.", event.threadID, event.messageID);
         return;
       }
-      const { data } = await axios.get(dipto.url, { method: 'GET', responseType: 'arraybuffer' });
- const path = __dirname + `/cache/dvia.m4a`
-            if(!fs.existsSync(path)){
-        fs.mkdir(__dirname + '/cache');
-      }
-      fs.writeFileSync(path, Buffer.from(data, 'utf-8'));
 
-      const audioReadStream = fs.createReadStream(path);
+      const { data } = await axios.get(att.url, { method: 'GET', responseType: 'arraybuffer' });
+      fs.writeFileSync(__dirname + "/assets/vdtoau.m4a", Buffer.from(data, 'utf-8'));
+
+      const audioReadStream = fs.createReadStream(__dirname + "/assets/vdtoau.m4a");
       const msg = { body: "", attachment: [audioReadStream] };
       api.sendMessage(msg, event.threadID, event.messageID);
     } catch (e) {
       console.log(e);
-message.reply(e.message)
     }
   },
 };
