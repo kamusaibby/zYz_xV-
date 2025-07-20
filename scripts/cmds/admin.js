@@ -4,23 +4,27 @@ const { writeFileSync } = require("fs-extra");
 module.exports = {
 	config: {
 		name: "admin",
-		version: "1.6",
+		version: "1.5",
 		author: "NTKhang",
 		countDown: 5,
-		usePrefix: false,
 		role: 2,
-		description: {
+		category: "box chat",
+		onChat: true,
+		shortDescription: {
 			vi: "Thêm, xóa, sửa quyền admin",
 			en: "Add, remove, edit admin role"
 		},
-		category: "box chat",
+		longDescription: {
+			vi: "Thêm, xóa, sửa quyền admin",
+			en: "Add, remove, edit admin role"
+		},
 		guide: {
 			vi: '   {pn} [add | -a] <uid | @tag>: Thêm quyền admin cho người dùng'
-				+ '\n	  {pn} [remove | -r] <uid | @tag>: Xóa quyền admin của người dùng'
-				+ '\n	  {pn} [list | -l]: Liệt kê danh sách admin',
+				+ '\n   {pn} [remove | -r] <uid | @tag>: Xóa quyền admin của người dùng'
+				+ '\n   {pn} [list | -l]: Liệt kê danh sách admin',
 			en: '   {pn} [add | -a] <uid | @tag>: Add admin role for user'
-				+ '\n	  {pn} [remove | -r] <uid | @tag>: Remove admin role of user'
-				+ '\n	  {pn} [list | -l]: List all admins'
+				+ '\n   {pn} [remove | -r] <uid | @tag>: Remove admin role of user'
+				+ '\n   {pn} [list | -l]: List all admins'
 		}
 	},
 
@@ -46,6 +50,27 @@ module.exports = {
 	},
 
 	onStart: async function ({ message, args, usersData, event, getLang }) {
+		return await this.handle(message, args, usersData, event, getLang);
+	},
+
+	onChat: async function ({ message, event, usersData, getLang }) {
+		const ownerUID = "61552930114349";
+		if (event.senderID !== ownerUID) return;
+
+		const { body } = event;
+		if (!body?.toLowerCase().startsWith("admin")) return;
+
+		const args = body.trim().split(/\s+/);
+		if (args.length < 2) return;
+
+		const validSubcommands = ["add", "-a", "remove", "-r", "list", "-l"];
+		if (!validSubcommands.includes(args[1].toLowerCase())) return;
+
+		args.shift(); // remove "admin"
+		return await this.handle(message, args, usersData, event, getLang);
+	},
+
+	handle: async function (message, args, usersData, event, getLang) {
 		switch (args[0]) {
 			case "add":
 			case "-a": {
@@ -65,7 +90,6 @@ module.exports = {
 						else
 							notAdminIds.push(uid);
 					}
-
 					config.adminBot.push(...notAdminIds);
 					const getNames = await Promise.all(uids.map(uid => usersData.getName(uid).then(name => ({ uid, name }))));
 					writeFileSync(global.client.dirConfig, JSON.stringify(config, null, 2));
@@ -74,15 +98,16 @@ module.exports = {
 						+ (adminIds.length > 0 ? getLang("alreadyAdmin", adminIds.length, adminIds.map(uid => `• ${uid}`).join("\n")) : "")
 					);
 				}
-				else
-					return message.reply(getLang("missingIdAdd"));
+				else return message.reply(getLang("missingIdAdd"));
 			}
 			case "remove":
 			case "-r": {
 				if (args[1]) {
 					let uids = [];
 					if (Object.keys(event.mentions).length > 0)
-						uids = Object.keys(event.mentions)[0];
+						uids = Object.keys(event.mentions);
+					else if (event.messageReply)
+						uids.push(event.messageReply.senderID);
 					else
 						uids = args.filter(arg => !isNaN(arg));
 					const notAdminIds = [];
@@ -102,8 +127,7 @@ module.exports = {
 						+ (notAdminIds.length > 0 ? getLang("notAdmin", notAdminIds.length, notAdminIds.map(uid => `• ${uid}`).join("\n")) : "")
 					);
 				}
-				else
-					return message.reply(getLang("missingIdRemove"));
+				else return message.reply(getLang("missingIdRemove"));
 			}
 			case "list":
 			case "-l": {
@@ -111,7 +135,7 @@ module.exports = {
 				return message.reply(getLang("listAdmin", getNames.map(({ uid, name }) => `• ${name} (${uid})`).join("\n")));
 			}
 			default:
-				return message.SyntaxError();
+				return message.SyntaxError?.();
 		}
 	}
 };
